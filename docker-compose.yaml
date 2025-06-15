@@ -1,0 +1,48 @@
+version: '3.9'
+
+services:
+  php:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    container_name: blazar_php
+    ports:
+      - "1500:1500"  # Expose Symfony server port
+    volumes:
+      - .:/var/www/html  # Mount the current directory to /var/www/html
+    environment:
+      - SYMFONY_ENV=prod
+      - MONGODB_URL=mongodb+srv://gabrielols381:xDX4vSXcMZTfchhe@cluster0.xzziu3e.mongodb.net/meubanco?retryWrites=true&w=majority&appName=Cluster0
+    networks:
+      - blazar_backend_network
+
+  nginx:
+    image: nginx:alpine
+    container_name: blazar_nginx
+    ports:
+      - "8080:80"
+    volumes:
+      - .:/var/www/html
+      - ./.docker/config/nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - php
+    networks:
+      - blazar_backend_network
+
+  database:
+    image: postgres:${POSTGRES_VERSION:-16}-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-app}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-!ChangeMe!}
+      POSTGRES_USER: ${POSTGRES_USER:-app}
+    volumes:
+      - database_data:/var/lib/postgresql/data:rw
+    networks:
+      - blazar_backend_network
+
+volumes:
+  database_data:
+
+networks:
+  blazar_backend_network:
+    driver: bridge
