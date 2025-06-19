@@ -1,6 +1,7 @@
+# Usa PHP 8.4 FPM com Alpine (leve)
 FROM php:8.4-fpm-alpine
 
-# Install system dependencies
+# Instala dependências do sistema e PHP
 RUN apk update && apk add --no-cache \
     bash \
     nano \
@@ -20,31 +21,24 @@ RUN apk update && apk add --no-cache \
     pkgconf \
     libzip-dev
 
-# Install Composer
+# Instala Composer
 RUN wget https://getcomposer.org/installer -O composer-installer.php \
     && php composer-installer.php --install-dir=/usr/local/bin --filename=composer \
     && rm composer-installer.php
 
-# Install Symfony CLI
-RUN curl -sS https://get.symfony.com/cli/installer | bash
-RUN mv ~/.symfony*/bin/symfony /usr/local/bin/symfony
+# Instala extensões PHP
+RUN pecl install mongodb xdebug \
+    && docker-php-ext-enable mongodb xdebug \
+    && docker-php-ext-install zip
 
-# Install and configure Xdebug
-RUN pecl install xdebug \
-    && docker-php-ext-enable xdebug
+# Copia código para dentro do container
+COPY . /var/www/html
 
-# Install MongoDB extension
-RUN pecl install mongodb \
-    && docker-php-ext-enable mongodb
-
-# Install PHP extensions
-RUN docker-php-ext-install zip
-
-# Expose port 1500 for Symfony
-EXPOSE 1500
-
-# Set the working directory to where Symfony is located
+# Define diretório de trabalho
 WORKDIR /var/www/html
 
-# Start Symfony server on port 1500
-CMD ["symfony", "server:start", "--port=1500", "--no-tls"]
+# Expõe a porta padrão do PHP-FPM (9000)
+EXPOSE 9000
+
+# Start: PHP-FPM foreground
+CMD ["php-fpm"]

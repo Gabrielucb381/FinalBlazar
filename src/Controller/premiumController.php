@@ -51,8 +51,8 @@ class premiumController
         $premium->setPaymentStatus(null);
         $premium->setCardOwnerName(null);
         $premium->setCpfTitular(null);
-        $premium->setCardLast4(null);  // Adicionando campo para os últimos 4 dígitos do cartão
-        $premium->setCardExpiry(null); // Adicionando campo para validade do cartão
+        $premium->setCardLast4(null);  
+        $premium->setCardExpiry(null); 
         $premium->setPaymentDate(null);
 
         $dm->persist($premium);
