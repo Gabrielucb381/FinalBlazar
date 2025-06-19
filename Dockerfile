@@ -1,44 +1,51 @@
-# Usa PHP 8.4 FPM com Alpine (leve)
+# Usa PHP 8.4 FPM com Alpine
 FROM php:8.4-fpm-alpine
 
-# Instala dependências do sistema e PHP
+# Instala dependências do sistema e utilitários comuns
 RUN apk update && apk add --no-cache \
     bash \
     nano \
     curl \
-    libpng-dev \
-    libxml2-dev \
-    zip \
-    unzip \
     git \
     wget \
+    zip \
+    unzip \
+    libpng-dev \
+    libxml2-dev \
+    libzip-dev \
     autoconf \
     g++ \
     make \
     linux-headers \
-    curl-dev \
     openssl-dev \
     pkgconf \
-    libzip-dev
+    file \
+    dpkg-dev \
+    libmagic \
+    re2c
 
 # Instala Composer
-RUN wget https://getcomposer.org/installer -O composer-installer.php \
-    && php composer-installer.php --install-dir=/usr/local/bin --filename=composer \
-    && rm composer-installer.php
+RUN curl -sS https://getcomposer.org/installer | php \
+    && mv composer.phar /usr/local/bin/composer
 
-# Instala extensões PHP
+# (Opcional) Instala Symfony CLI — remova se não for usar em produção
+RUN curl -sS https://get.symfony.com/cli/installer | bash \
+    && mv /root/.symfony*/bin/symfony /usr/local/bin/symfony
+
+# Instala extensões PHP via PECL e core
 RUN pecl install mongodb xdebug \
     && docker-php-ext-enable mongodb xdebug \
     && docker-php-ext-install zip
 
-# Copia código para dentro do container
-COPY . /var/www/html
-
-# Define diretório de trabalho
+# Cria pasta da app e define permissões seguras
 WORKDIR /var/www/html
 
-# Expõe a porta padrão do PHP-FPM (9000)
-EXPOSE 9000
+# Copia o projeto
+COPY . .
 
-# Start: PHP-FPM foreground
+# Define usuário (opcional, mas recomendado em produção para não rodar como root)
+# RUN addgroup -g 1000 www && adduser -G www -u 1000 -D www
+# USER www
+
+# Comando padrão: inicia FPM em foreground
 CMD ["php-fpm"]
